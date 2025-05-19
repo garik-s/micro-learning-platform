@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  role        String       @default("student")
+  courses     Course[]     @relation("InstructorCourses")
+  enrollments Enrollment[]
+  questions   Question[]   @relation("StudentQuestions")
+  answers     Answer[]     @relation("InstructorAnswers")
+}
+
+model Course {
+  id           Int          @id @default(autoincrement())
+  title        String
+  description  String
+  instructor   User         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructorId Int
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  createdAt    DateTime     @default(now())
+}
+
+model Lesson {
+  id        Int        @id @default(autoincrement())
+  title     String
+  content   String
+  course    Course     @relation(fields: [courseId], references: [id])
+  courseId  Int
+  questions Question[]
+  createdAt DateTime   @default(now())
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  Int
+  createdAt DateTime @default(now())
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  content   String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  lessonId  Int
+  student   User     @relation("StudentQuestions", fields: [studentId], references: [id])
+  studentId Int
+  answerId  Int?     @unique
+  answer    Answer?  @relation(fields: [answerId], references: [id])
+  createdAt DateTime @default(now())
+  archived  Boolean  @default(false)
+}
+
+model Answer {
+  id           Int       @id @default(autoincrement())
+  content      String
+  instructor   User      @relation("InstructorAnswers", fields: [instructorId], references: [id])
+  instructorId Int
+  question     Question? @relation
+}
